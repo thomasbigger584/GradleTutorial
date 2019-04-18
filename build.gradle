@@ -1,0 +1,167 @@
+
+task hello << {
+		println 'tutorialspoint\n'
+}
+
+task(hello_syntax_1) << {
+    println "tutorialspoint\n"
+}
+
+task uppercase(dependsOn: 'hello') << {
+
+	String originalString = "Tutorials Point"
+	println "Original: " + originalString
+	println "UpperCase: " + originalString.toUpperCase();
+}
+
+task count << {
+
+	// $it implicit parameter
+	4.times {
+
+		print "$it"
+	}
+
+	println ""
+}
+
+task groovyJdk << {
+
+	String name = "Marc"
+
+	name.each() {
+		println "${it}"
+	}
+}
+
+task getBuildDir << {
+
+	println project.buildDir
+	println getProject().getBuildDir()
+}
+
+task setBuildDir << {
+
+	try {
+
+		project.buildDir = dir;
+		getProject().setBuildDir(dir)
+
+		println getProject().getBuildDir()
+
+	} catch (groovy.lang.MissingPropertyException mpe) {
+		println "Consider using -P parameter flag: gradle -Pdir=file setBuildDir"
+	}	
+}
+
+task locate << {
+
+	try {
+
+		println tasks[task].name;
+
+	} catch (groovy.lang.MissingPropertyException mpe) {
+		println "Consider using -P parameter flag: gradle -Ptask=task locate"
+	}	
+}	
+
+// do task starting with string
+task task1 << {
+
+	println "task1"
+}
+
+task1.dependsOn {
+
+	tasks.findAll {
+		task -> task.name.startsWith('lib')
+	}
+}
+
+task lib1 << {
+	println 'lib1'
+}
+
+task lib2 << {
+	println 'lib2'
+}
+
+task notALib << {
+	println 'notALib'
+}
+
+// adding descrition to a task
+task copy(type: Copy) << {
+
+	description 'Copies the resource directory to the target directory.'
+	from 'resources'
+	into 'target'
+	include('**/*.txt', '**/*.xml', '**/*.properties')
+	println 'copy completed'
+}
+
+// skipping tasks
+task taskPostStopTask << {
+
+	println 'taskPostStopTask - shouldnt be called'
+}
+
+// StopExecutionException called within closure only, i.e. <task>.doFirst, doLast etc
+taskPostStopTask.doFirst {
+
+	println 'skipping task'
+	throw new StopExecutionException()
+	println 'more work to be done - shouldnt get called'
+}
+
+// declaring dependancies
+apply plugin: 'java'
+apply plugin: 'maven'
+
+repositories {
+
+	mavenCentral()
+}
+
+dependencies {
+
+	compile group: 'org.hibernate', name: 'hibernate-core', version: '3.6.7.Final'
+	testCompile group: 'junit', name: 'junit', version: '4.+'
+}
+
+uploadArchives {
+
+	repositories {
+		mavenDeployer {
+			repository(url: "file://localhost/tmp/repo")
+		}
+	}
+}
+
+// creating a custom plugin, with an extension class
+apply plugin: GreetingPlugin
+
+greeting {
+
+    message = 'Hello'
+    greeter = 'Gradle'
+}
+
+class GreetingPlugin implements Plugin<Project> {
+
+	void apply(Project project) {
+
+		project.extensions.create("greeting", GreetingPluginExtension)
+
+		project.task('plugin_task') << {
+
+            println "${project.greeting.message} from ${project.greeting.greeter}"
+		}
+	}
+}
+
+class GreetingPluginExtension {
+
+	String message
+    String greeter
+}
